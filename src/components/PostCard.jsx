@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import appwriteService from "../appwrite/config";
 import useTilt from "../hooks/useTilt";
+import { resolveImageSource, handleImageError } from "../utils/imageHelper";
 
 function stripHtml(html = "") {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -13,9 +13,9 @@ function readingTime(content = "") {
 }
 
 function formatDate(value) {
-  if (!value) return "";
+  if (!value) return "Recent";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
+  if (Number.isNaN(date.getTime())) return "Recent";
   return date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -23,9 +23,9 @@ function formatDate(value) {
   });
 }
 
-function PostCard({ $id, title, content, featuredImage, $createdAt }) {
+function PostCard({ $id, title, content, featuredImage, category, $createdAt }) {
   const tiltRef = useTilt({ max: 12, lift: -12 });
-  const preview = featuredImage ? appwriteService.getFilePreview(featuredImage) : null;
+  const imageSrc = resolveImageSource(featuredImage, title || $id);
 
   return (
     <Link to={`/post/${$id}`} className="scene group block h-full">
@@ -34,27 +34,27 @@ function PostCard({ $id, title, content, featuredImage, $createdAt }) {
 
         <div className="relative overflow-hidden rounded-t-[21px]">
           <div className="aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-violet-500/70 via-fuchsia-500/45 to-cyan-400/60">
-            {preview ? (
-              <img
-                src={preview}
-                alt={title || "Story cover"}
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-110"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <span className="font-display text-5xl font-extrabold text-white/15">
-                  C
-                </span>
-              </div>
-            )}
+            <img
+              src={imageSrc}
+              alt={title || "Story cover"}
+              loading="lazy"
+              onError={(e) => handleImageError(e, title || $id)}
+              className="h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-110"
+            />
           </div>
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#05060c] via-[#05060c]/25 to-transparent opacity-90" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#05060c] via-transparent to-transparent opacity-60" />
 
-          <span className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200 backdrop-blur-md transition-colors duration-300 group-hover:border-cyan-300/60">
-            {readingTime(content)} min read
-          </span>
+          <div className="absolute left-4 top-4 flex items-center gap-2">
+            <span className="rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200 backdrop-blur-md transition-colors duration-300 group-hover:border-cyan-300/60">
+              {readingTime(content)} min read
+            </span>
+            {category && (
+              <span className="rounded-full border border-violet-400/30 bg-violet-950/60 px-2.5 py-1 text-[10px] font-semibold text-violet-300 backdrop-blur-md">
+                {category}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="relative flex flex-1 flex-col p-5">

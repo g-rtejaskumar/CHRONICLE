@@ -15,10 +15,17 @@ export default function RTE({ name, control, label, defaultValue = "" }) {
         <Controller
           name={name || "content"}
           control={control}
-          render={({ field: { onChange } }) => (
+          rules={{
+            required: "Article content is required",
+            validate: (val) => {
+              const stripped = (val || "").replace(/<[^>]*>/g, "").trim();
+              return stripped.length > 0 || "Article content cannot be empty";
+            },
+          }}
+          render={({ field: { onChange, value } }) => (
             <Editor
               apiKey={conf.tinymceApiKey}
-              initialValue={defaultValue}
+              value={value !== undefined ? value : defaultValue}
               init={{
                 initialValue: defaultValue,
                 height: 480,

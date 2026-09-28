@@ -5,16 +5,16 @@ import Hero from "../components/Hero";
 import Reveal from "../components/Reveal";
 import useReveal from "../hooks/useReveal";
 import appwriteService from "../appwrite/config";
+import { getAllMergedPosts } from "../data/showcasePosts";
 
 const TOPICS = [
-  "Design",
+  "All",
   "Engineering",
+  "Design",
+  "AI",
   "Product",
   "Culture",
-  "AI",
   "Startups",
-  "Craft",
-  "Remote Work",
 ];
 
 const STATS = [
@@ -109,14 +109,18 @@ function EmptyState() {
 function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTopic, setSelectedTopic] = useState("All");
 
   useEffect(() => {
     appwriteService
       .getPosts()
       .then((response) => {
-        if (response) {
-          setPosts(response.documents);
-        }
+        const live = response?.documents || [];
+        setPosts(getAllMergedPosts(live));
+      })
+      .catch((err) => {
+        console.warn("Appwrite getPosts error, falling back to showcase posts", err);
+        setPosts(getAllMergedPosts([]));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -139,6 +143,10 @@ function Home() {
   const stats = STATS.map((stat, index) =>
     index === 0 ? { ...stat, value: posts.length } : stat
   );
+
+  const displayedPosts = selectedTopic === "All"
+    ? posts
+    : posts.filter((p) => (p.category || "").toLowerCase() === selectedTopic.toLowerCase());
 
   return (
     <div className="relative overflow-x-hidden">
@@ -167,7 +175,7 @@ function Home() {
 
       <section className="relative overflow-hidden border-b border-white/10 bg-white/[0.015] py-5">
         <div className="marquee-track gap-10 text-sm font-semibold uppercase tracking-[0.35em] text-slate-500">
-          {[...TOPICS, ...TOPICS, ...TOPICS, ...TOPICS].map((topic, index) => (
+          {[...TOPICS.slice(1), ...TOPICS.slice(1), ...TOPICS.slice(1)].map((topic, index) => (
             <span key={`${topic}-${index}`} className="flex items-center gap-10 whitespace-nowrap">
               {topic}
               <span className="text-violet-400">✦</span>
@@ -180,7 +188,7 @@ function Home() {
         <div className="orb orb-violet" style={{ width: "24rem", height: "24rem", top: "10%", left: "-8rem", opacity: 0.25 }} />
 
         <Container className="relative z-10">
-          <div className="mb-14 flex flex-wrap items-end justify-between gap-6">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <Reveal>
               <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-300">
                 Featured stories
@@ -192,9 +200,26 @@ function Home() {
 
             <Reveal delay={120}>
               <Link to="/all-posts" className="btn-3d btn-ghost">
-                View all posts →
+                Browse all {posts.length} stories →
               </Link>
             </Reveal>
+          </div>
+
+          {/* Topic Filters */}
+          <div className="mb-12 flex flex-wrap items-center gap-2">
+            {TOPICS.map((topic) => (
+              <button
+                key={topic}
+                onClick={() => setSelectedTopic(topic)}
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 ${
+                  selectedTopic === topic
+                    ? "border border-cyan-400/60 bg-gradient-to-r from-violet-500/40 to-cyan-400/30 text-white shadow-[0_0_16px_rgba(34,211,238,0.4)]"
+                    : "border border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                {topic}
+              </button>
+            ))}
           </div>
 
           {loading ? (
@@ -203,11 +228,19 @@ function Home() {
                 <SkeletonCard key={i} delay={i * 150} />
               ))}
             </div>
-          ) : posts.length === 0 ? (
-            <EmptyState />
+          ) : displayedPosts.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="text-slate-400">No stories found under the {selectedTopic} topic.</p>
+              <button
+                onClick={() => setSelectedTopic("All")}
+                className="btn-3d btn-ghost mt-4 text-xs py-2 px-4"
+              >
+                Clear filter
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
-              {posts.map((post, index) => (
+              {displayedPosts.map((post, index) => (
                 <Reveal
                   key={post.$id}
                   variant="3d"

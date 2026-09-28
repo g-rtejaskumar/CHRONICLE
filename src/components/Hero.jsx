@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Container from "./container/Container";
 import ParticleCanvas from "./ParticleCanvas";
 
@@ -16,6 +17,7 @@ function prefersReducedMotion() {
 
 function Hero() {
   const sceneRef = useRef(null);
+  const authStatus = useSelector((state) => state.auth.status);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -122,9 +124,15 @@ function Hero() {
                 Explore the feed
                 <span aria-hidden="true">→</span>
               </a>
-              <Link to="/signup" className="btn-3d btn-ghost">
-                Start writing free
-              </Link>
+              {authStatus ? (
+                <Link to="/add-post" className="btn-3d btn-ghost">
+                  Write a story ✦
+                </Link>
+              ) : (
+                <Link to="/signup" className="btn-3d btn-ghost">
+                  Start writing free
+                </Link>
+              )}
             </div>
 
             <div className="mt-10 flex items-center justify-center gap-6 text-sm text-slate-400 lg:justify-start">

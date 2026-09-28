@@ -6,20 +6,38 @@ import Reveal from '../Reveal'
 
 const COLUMNS = [
   {
-    title: 'Company',
-    links: ['Features', 'Pricing', 'Affiliate Program', 'Press Kit'],
+    title: 'Platform',
+    links: [
+      { label: 'Featured Feed', to: '/#featured' },
+      { label: 'All Chronicles', to: '/all-posts' },
+      { label: 'Creator Studio', to: '/add-post' },
+      { label: 'GitHub Repository', href: 'https://github.com/g-rtejaskumar/CHRONICLE' },
+    ],
   },
   {
-    title: 'Support',
-    links: ['Account', 'Help', 'Contact Us', 'Customer Support'],
+    title: 'Topics',
+    links: [
+      { label: 'Engineering Architecture', to: '/all-posts' },
+      { label: 'Spatial & 3D UI', to: '/all-posts' },
+      { label: 'Autonomous AI Agents', to: '/all-posts' },
+      { label: 'Startup Velocity', to: '/all-posts' },
+    ],
   },
   {
-    title: 'Legals',
-    links: ['Terms & Conditions', 'Privacy Policy', 'Licensing'],
+    title: 'Community',
+    links: [
+      { label: 'Sign In', to: '/login' },
+      { label: 'Join Chronicle Free', to: '/signup' },
+      { label: 'Back to Top ↑', onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+    ],
   },
 ]
 
-const SOCIALS = ['X', 'GitHub', 'Dribbble', 'LinkedIn']
+const SOCIALS = [
+  { label: 'GitHub', href: 'https://github.com/g-rtejaskumar/CHRONICLE' },
+  { label: 'X', href: 'https://twitter.com' },
+  { label: 'LinkedIn', href: 'https://linkedin.com' },
+]
 
 function Footer() {
   return (
@@ -43,13 +61,15 @@ function Footer() {
 
             <div className="mt-7 flex flex-wrap gap-3">
               {SOCIALS.map((social) => (
-                <Link
-                  key={social}
-                  to="/"
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="link-3d rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-300/50 hover:shadow-[0_16px_30px_-18px_rgba(34,211,238,1)]"
                 >
-                  {social}
-                </Link>
+                  {social.label} ↗
+                </a>
               ))}
             </div>
           </Reveal>
@@ -61,11 +81,33 @@ function Footer() {
                   {column.title}
                 </h3>
                 <ul className="space-y-3">
-                  {column.links.map((label) => (
-                    <li key={label}>
-                      <Link to="/" className="link-3d text-sm text-slate-400 hover:text-white">
-                        {label}
-                      </Link>
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      {link.href ? (
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="link-3d text-sm text-slate-400 hover:text-white"
+                        >
+                          {link.label} ↗
+                        </a>
+                      ) : link.onClick ? (
+                        <button
+                          type="button"
+                          onClick={link.onClick}
+                          className="link-3d text-sm text-slate-400 hover:text-cyan-300 text-left"
+                        >
+                          {link.label}
+                        </button>
+                      ) : (
+                        <Link
+                          to={link.to}
+                          className="link-3d text-sm text-slate-400 hover:text-white"
+                        >
+                          {link.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

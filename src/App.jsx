@@ -6,6 +6,7 @@ import { login, logout } from './store/authSlice'
 import Header from './components/Header/Header'
 import Footer from './components/Footer/Footer'
 import GlowPointer from './components/GlowPointer'
+import ScrollToTop from './components/ScrollToTop'
 import { Outlet } from 'react-router-dom'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
 
   return !loading ? (
     <div className='relative min-h-screen flex flex-wrap content-between bg-[#05060c] text-slate-100 selection:bg-violet-500/40'>
+      <ScrollToTop />
       <GlowPointer />
 
       <div className='pointer-events-none fixed inset-0 -z-10 overflow-hidden'>

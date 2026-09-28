@@ -4,15 +4,16 @@ import PostCard from '../components/PostCard';
 import Reveal from '../components/Reveal';
 import appwriteService from '../appwrite/config';
 import { Link } from "react-router-dom";
+import { getAllMergedPosts } from "../data/showcasePosts";
 
 const FILTER_TOPICS = [
     "All",
-    "Design",
     "Engineering",
+    "Design",
     "AI",
-    "Culture",
-    "Product",
     "Startups",
+    "Product",
+    "Culture",
 ];
 
 function AllPosts() {
@@ -25,12 +26,12 @@ function AllPosts() {
         setLoading(true);
         appwriteService.getPosts([])
             .then((res) => {
-                if (res) {
-                    setPosts(res.documents);
-                }
+                const live = res?.documents || [];
+                setPosts(getAllMergedPosts(live));
             })
             .catch((err) => {
-                console.error("Error fetching all posts:", err);
+                console.warn("Appwrite getPosts error, falling back to showcase library", err);
+                setPosts(getAllMergedPosts([]));
             })
             .finally(() => setLoading(false));
     }, []);
@@ -38,14 +39,16 @@ function AllPosts() {
     const filteredPosts = useMemo(() => {
         return posts.filter((post) => {
             const matchesSearch =
+                !searchTerm ||
                 (post.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
                 (post.content?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
             if (!matchesSearch) return false;
             if (selectedTopic === "All") return true;
 
-            const text = `${post.title} ${post.content}`.toLowerCase();
-            return text.includes(selectedTopic.toLowerCase());
+            const matchesCategory = (post.category || "").toLowerCase() === selectedTopic.toLowerCase();
+            const textMatches = `${post.title} ${post.content}`.toLowerCase().includes(selectedTopic.toLowerCase());
+            return matchesCategory || textMatches;
         });
     }, [posts, searchTerm, selectedTopic]);
 

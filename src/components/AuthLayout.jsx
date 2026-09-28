@@ -17,5 +17,14 @@ export default function Protected({children, authentication = true}) {
         setLoader(false)
     }, [authStatus, navigate, authentication])
 
-  return loader ? <h1>Loading...</h1> : <>{children}</>
+  return loader ? (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="relative flex h-14 w-14 items-center justify-center">
+        <span className="pulse-ring absolute h-14 w-14 rounded-full border border-violet-400/60" />
+        <span className="h-3.5 w-3.5 animate-ping rounded-full bg-gradient-to-br from-violet-400 to-cyan-300" />
+      </div>
+    </div>
+  ) : (
+    <>{children}</>
+  );
 }

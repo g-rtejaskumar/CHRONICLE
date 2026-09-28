@@ -17,10 +17,15 @@ export class Service{
         }
         async createPost({title, slug, content, featuredImage, status, userId}){
             try {
+                const safeSlug = (slug && typeof slug === "string")
+                    ? slug.trim().toLowerCase().replace(/[^a-zA-Z0-9._-]/g, '-').replace(/^-+|-+$/g, '').slice(0, 36)
+                    : "";
+                const documentId = safeSlug || ID.unique();
+
                 return await this.databases.createDocument(
                     conf.appwriteDatabaseId,
                     conf.appwriteCollectionId,
-                    slug,
+                    documentId,
                     {
                         title,
                         content,
@@ -30,16 +35,18 @@ export class Service{
                     }
                 )   
             } catch (error) {
-                console.log("Appwrite Service :: createPost :: error",error)
+                console.error("Appwrite Service :: createPost :: error", error);
+                throw error;
             }
         }
 
         async updatePost(slug,{title, content, featuredImage, status,}){
             try {
+                const safeSlug = String(slug).slice(0, 36);
                 return await this.databases.updateDocument(
                     conf.appwriteDatabaseId,
                     conf.appwriteCollectionId,
-                    slug,
+                    safeSlug,
                     {
                         title,
                         content,
@@ -48,7 +55,8 @@ export class Service{
                     }
                 ) 
             } catch (error) {
-                 console.log("Appwrite Service :: updatePost :: error",error)
+                 console.error("Appwrite Service :: updatePost :: error", error);
+                 throw error;
             }
         }
 
@@ -121,13 +129,32 @@ export class Service{
 
         getFilePreview(fileId){
             if (!fileId) return "";
+            if (typeof fileId === "string" && (fileId.startsWith("http://") || fileId.startsWith("https://") || fileId.startsWith("data:"))) {
+                return fileId;
+            }
             try {
                 return this.bucket.getFilePreview(
                     conf.appwriteBucketId,
                     fileId
-                )
+                ).toString();
             } catch (error) {
                 console.error("Appwrite Service :: getFilePreview :: error", error);
+                return "";
+            }
+        }
+
+        getFileView(fileId){
+            if (!fileId) return "";
+            if (typeof fileId === "string" && (fileId.startsWith("http://") || fileId.startsWith("https://") || fileId.startsWith("data:"))) {
+                return fileId;
+            }
+            try {
+                return this.bucket.getFileView(
+                    conf.appwriteBucketId,
+                    fileId
+                ).toString();
+            } catch (error) {
+                console.error("Appwrite Service :: getFileView :: error", error);
                 return "";
             }
         }

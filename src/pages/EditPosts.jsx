@@ -5,6 +5,7 @@ import Reveal from "../components/Reveal";
 import appwriteService from '../appwrite/config';
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { getShowcasePost } from "../data/showcasePosts";
 
 function EditPosts() {
     const [post, setPost] = useState(null);
@@ -20,14 +21,21 @@ function EditPosts() {
                     if (postData) {
                         setPost(postData);
                     } else {
-                        toast.error("Story not found");
-                        navigate('/');
+                        const fallback = getShowcasePost(slug);
+                        if (fallback) setPost(fallback);
+                        else {
+                            toast.error("Story not found");
+                            navigate('/');
+                        }
                     }
                 })
-                .catch((err) => {
-                    console.error("Error fetching post for edit:", err);
-                    toast.error("Failed to load post for editing");
-                    navigate('/');
+                .catch(() => {
+                    const fallback = getShowcasePost(slug);
+                    if (fallback) setPost(fallback);
+                    else {
+                        toast.error("Failed to load post for editing");
+                        navigate('/');
+                    }
                 })
                 .finally(() => setLoading(false));
         } else {

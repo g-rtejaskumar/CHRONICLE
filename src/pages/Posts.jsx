@@ -6,6 +6,8 @@ import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import useTilt from "../hooks/useTilt";
+import { getShowcasePost } from "../data/showcasePosts";
+import { resolveImageSource, handleImageError } from "../utils/imageHelper";
 
 function stripHtml(html = "") {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -58,14 +60,23 @@ export default function Post() {
                     if (postData) {
                         setPost(postData);
                     } else {
-                        toast.error("Story not found");
-                        navigate("/");
+                        const fallback = getShowcasePost(slug);
+                        if (fallback) {
+                            setPost(fallback);
+                        } else {
+                            toast.error("Story not found");
+                            navigate("/");
+                        }
                     }
                 })
-                .catch((err) => {
-                    console.error("Error fetching post:", err);
-                    toast.error("Failed to load article");
-                    navigate("/");
+                .catch(() => {
+                    const fallback = getShowcasePost(slug);
+                    if (fallback) {
+                        setPost(fallback);
+                    } else {
+                        toast.error("Failed to load article");
+                        navigate("/");
+                    }
                 })
                 .finally(() => setLoading(false));
         } else {
@@ -97,11 +108,21 @@ export default function Post() {
     };
 
     const handleShare = async () => {
-        if (navigator.clipboard) {
-            await navigator.clipboard.writeText(window.location.href);
-            toast.success("Story link copied to clipboard!");
-        } else {
-            toast.success("URL ready to share!");
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success("Story link copied to clipboard!");
+            } else {
+                const dummy = document.createElement("input");
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand("copy");
+                document.body.removeChild(dummy);
+                toast.success("Story link copied to clipboard!");
+            }
+        } catch {
+            toast.success("Story link ready to share!");
         }
     };
 
@@ -138,7 +159,7 @@ export default function Post() {
                         <span>Back to feed</span>
                     </Link>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <button
                             onClick={handleShare}
                             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/50 hover:text-cyan-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
@@ -164,6 +185,15 @@ export default function Post() {
                                     Delete
                                 </button>
                             </div>
+                        )}
+
+                        {!isAuthor && userData && (
+                            <Link
+                                to={`/edit-post/${post.$id}`}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-600/15 px-3.5 py-2 text-xs font-semibold text-violet-200 transition-all duration-300 hover:bg-violet-600/30 hover:border-violet-400/60"
+                            >
+                                <span>✦ Remix Story</span>
+                            </Link>
                         )}
                     </div>
                 </div>
@@ -193,11 +223,12 @@ export default function Post() {
                             <span className="spotlight" />
                             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[22px] bg-[#05060c]">
                                 <img
-                                    src={appwriteService.getFilePreview(post.featuredImage)}
+                                    src={resolveImageSource(post.featuredImage, post.title || post.$id)}
                                     alt={post.title}
+                                    onError={(e) => handleImageError(e, post.title || post.$id)}
                                     className="h-full w-full object-cover"
                                 />
-                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#05060c]/60 via-transparent to-transparent" />
+                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#05060c]/40 via-transparent to-transparent" />
                             </div>
                         </div>
                     </div>
@@ -213,11 +244,11 @@ export default function Post() {
                     <div className="mt-14 border-t border-white/10 pt-8 flex flex-wrap items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400 font-display text-lg font-bold text-white shadow-[0_10px_25px_-10px_rgba(139,92,246,1)]">
-                                C
+                                {post.authorName ? post.authorName.charAt(0) : "C"}
                             </div>
                             <div>
-                                <p className="font-semibold text-white">Chronicle Author</p>
-                                <p className="text-xs text-slate-400">Published on Chronicle Decentralized Journal</p>
+                                <p className="font-semibold text-white">{post.authorName || "Chronicle Staff Writer"}</p>
+                                <p className="text-xs text-slate-400">{post.authorRole || "Published on Chronicle Journal"}</p>
                             </div>
                         </div>
 
